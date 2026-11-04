@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Điền Từ - Kỳ Thi Cao Cấp</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0284c7',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #0c4a6e 0%, #075985 40%, #0284c7 80%, #d97706 100%);
+            min-height: 100vh;
+        }
+        .blank-input {
+            border-bottom: 2px solid #0284c7;
+            background-color: rgba(255, 255, 255, 0.95);
+            transition: all 0.2s ease;
+        }
+        .blank-input:focus {
+            outline: none;
+            border-bottom-color: #d97706;
+            background-color: #ffffff;
+            box-shadow: 0 4px 10px rgba(2, 132, 199, 0.2);
+        }
+        .blank-correct {
+            border-bottom-color: #16a34a !important;
+            background-color: #dcfce7 !important;
+            color: #15803d !important;
+            font-weight: 700;
+        }
+        .blank-incorrect {
+            border-bottom-color: #dc2626 !important;
+            background-color: #fee2e2 !important;
+            color: #b91c1c !important;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 md:p-10 flex flex-col items-center justify-center min-h-screen">
+
+    <div class="w-full max-w-4xl mx-auto">
+        <!-- HEADER -->
+        <header class="text-center mb-6">
+            <div class="inline-flex items-center space-x-2 bg-white/90 px-4 py-1.5 rounded-full shadow-md border border-amber-200 mb-2">
+                <i class="fa-solid fa-scroll text-amber-600"></i>
+                <span class="text-xs font-bold tracking-wider text-slate-800 uppercase">Khải Huyền - Ôn Tập Kinh Thánh</span>
+            </div>
+            <h1 class="text-2xl sm:text-4xl font-extrabold text-white drop-shadow-md tracking-tight">
+                KỲ THI CAO CẤP <span class="text-amber-300">QUIZ GAME</span>
+            </h1>
+            <p class="text-sky-100 text-sm sm:text-base mt-1">Điền từ/cụm từ vào chỗ trống & Thi đấu Bảng Xếp Hạng</p>
+        </header>
+
+        <!-- SCREEN 1: START SCREEN -->
+        <div id="start-screen" class="glass-card rounded-3xl p-6 sm:p-10 transition-all duration-300">
+            <div class="text-center max-w-xl mx-auto">
+                <div class="w-20 h-20 bg-gradient-to-tr from-brand-600 to-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl text-white">
+                    <i class="fa-solid fa-award text-3xl"></i>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-800 mb-2">Nhập tên để tham gia thử thách</h2>
+                <p class="text-slate-600 text-sm mb-6">Điền chính xác các cụm từ khóa quan trọng trong 20 câu hỏi Khải Huyền!</p>
+
+                <!-- Player Name Input Field -->
+                <div class="mb-6 text-left">
+                    <label class="block text-sm font-bold text-slate-700 mb-2">
+                        <i class="fa-solid fa-user-tag text-brand-600 mr-1.5"></i>Tên hoặc Biệt danh của bạn <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <input type="text" id="player-name-input" placeholder="Ví dụ: Giăng_2026..." class="w-full px-4 py-3.5 rounded-xl border-2 border-slate-200 focus:border-brand-500 focus:outline-none font-semibold text-slate-800 text-base shadow-sm bg-white transition" />
+                        <div class="absolute right-3 top-3.5 text-slate-400">
+                            <i class="fa-solid fa-pen"></i>
+                        </div>
+                    </div>
+                    <p id="name-error-msg" class="text-xs text-rose-500 font-semibold mt-1.5 hidden">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i>Vui lòng nhập tên của bạn trước khi bắt đầu!
+                    </p>
+                </div>
+
+                <!-- Options -->
+                <div class="space-y-6 text-left mb-8">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            <i class="fa-solid fa-sliders text-brand-600 mr-2"></i>Chế độ bài thi
+                        </label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button type="button" id="mode-all" onclick="selectMode('all')" class="mode-btn p-3 rounded-xl border-2 border-brand-500 bg-brand-50 text-brand-700 font-bold text-center text-sm transition">
+                                <i class="fa-solid fa-list-ol mr-1.5"></i> Theo thứ tự (1-20)
+                            </button>
+                            <button type="button" id="mode-random" onclick="selectMode('random')" class="mode-btn p-3 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold text-center text-sm hover:border-brand-300 transition">
+                                <i class="fa-solid fa-shuffle mr-1.5"></i> Ngẫu nhiên
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-2">
+                            <i class="fa-solid fa-list-check text-brand-600 mr-2"></i>Số lượng câu hỏi
+                        </label>
+                        <div class="grid grid-cols-3 gap-3">
+                            <button type="button" onclick="selectCount(5)" class="count-btn p-3 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold text-center text-sm hover:border-brand-300 transition">5 câu</button>
+                            <button type="button" onclick="selectCount(10)" class="count-btn p-3 rounded-xl border-2 border-slate-200 text-slate-600 font-semibold text-center text-sm hover:border-brand-300 transition">10 câu</button>
+                            <button type="button" onclick="selectCount(20)" class="count-btn p-3 rounded-xl border-2 border-brand-500 bg-brand-50 text-brand-700 font-bold text-center text-sm transition">Tất cả (20 câu)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <button onclick="startGame()" class="w-full sm:w-auto px-10 py-4 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-bold rounded-2xl shadow-xl transition-all transform hover:-translate-y-0.5 text-lg">
+                        Bắt đầu thi <i class="fa-solid fa-play ml-2"></i>
+                    </button>
+                    <button onclick="showLeaderboardModal()" class="w-full sm:w-auto px-6 py-4 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 font-bold rounded-2xl shadow-sm transition-all text-base">
+                        <i class="fa-solid fa-trophy text-amber-500 mr-2"></i>Bảng Xếp Hạng
+                    </button>
+                    <button onclick="shareGameLink()" class="w-full sm:w-auto px-5 py-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold rounded-2xl shadow-sm transition-all text-base">
+                        <i class="fa-solid fa-share-nodes text-emerald-600 mr-2"></i>Chia sẻ Game
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2: GAME SCREEN -->
+        <div id="game-screen" class="glass-card rounded-3xl p-5 sm:p-8 hidden">
+            <!-- Game Header & Progress -->
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 mb-6">
+                <div class="flex items-center space-x-3">
+                    <span class="bg-brand-100 text-brand-800 text-xs font-bold px-3 py-1.5 rounded-lg flex items-center border border-brand-200">
+                        <i class="fa-solid fa-user text-brand-600 mr-1.5"></i><span id="current-player-display">Người chơi</span>
+                    </span>
+                    <span class="bg-slate-100 text-slate-700 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-200" id="question-tracker">
+                        Câu 1/20
+                    </span>
+                    <span class="text-xs text-slate-600 font-bold">
+                        <i class="fa-regular fa-clock mr-1 text-brand-600"></i><span id="timer">00:00</span>
+                    </span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm font-semibold text-slate-700">
+                        Điểm: <span id="current-score" class="text-amber-600 font-extrabold text-lg">0</span>
+                    </div>
+                    <button onclick="toggleHint()" class="text-xs bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1.5 rounded-lg font-bold hover:bg-amber-100 transition shadow-sm">
+                        <i class="fa-regular fa-lightbulb text-amber-500 mr-1"></i> Gợi ý
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-200 h-2.5 rounded-full mb-6 overflow-hidden">
+                <div id="progress-bar" class="bg-gradient-to-r from-brand-500 to-amber-500 h-full w-0 transition-all duration-300"></div>
+            </div>
+
+            <!-- Hint Box -->
+            <div id="hint-box" class="hidden mb-4 p-3.5 bg-amber-50/90 border border-amber-300 text-amber-900 rounded-xl text-xs sm:text-sm">
+                <i class="fa-solid fa-circle-info mr-1.5 text-amber-600"></i>
+                <span id="hint-text">Gợi ý từ...</span>
+            </div>
+
+            <!-- Question Area -->
+            <div class="space-y-6">
+                <div>
+                    <span class="text-xs font-bold text-brand-600 uppercase tracking-wider block mb-1" id="question-number">CÂU HỎI 1</span>
+                    <h3 class="text-base sm:text-lg font-bold text-slate-800 leading-relaxed" id="question-title">
+                        Loading...
+                    </h3>
+                </div>
+
+                <!-- Answer Template Area -->
+                <div class="bg-slate-50 rounded-2xl p-4 sm:p-6 border border-slate-200/80 shadow-inner">
+                    <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center">
+                        <i class="fa-solid fa-pen-to-square text-brand-600 mr-1.5"></i> Điền các từ/cụm từ thích hợp vào ô trống bên dưới:
+                    </div>
+                    <div id="fill-template" class="text-slate-800 leading-loose text-sm sm:text-base font-medium space-y-3">
+                        <!-- Dynamic inputs inserted here -->
+                    </div>
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="feedback-box" class="hidden rounded-2xl p-4 border transition-all">
+                    <div id="feedback-title" class="font-bold text-sm sm:text-base flex items-center mb-1"></div>
+                    <div id="feedback-detail" class="text-xs sm:text-sm text-slate-700"></div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100">
+                    <button id="btn-show-answer" onclick="showAnswer()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-sm transition border border-slate-200">
+                        <i class="fa-solid fa-eye mr-1.5"></i>Xem đáp án
+                    </button>
+
+                    <div class="flex space-x-2 ml-auto">
+                        <button id="btn-check" onclick="checkAnswer()" class="px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-md text-sm transition">
+                            <i class="fa-solid fa-check mr-1.5"></i>Kiểm tra
+                        </button>
+                        <button id="btn-next" onclick="nextQuestion()" class="hidden px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-md text-sm transition">
+                            Tiếp theo <i class="fa-solid fa-chevron-right ml-1.5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: RESULT SCREEN -->
+        <div id="result-screen" class="glass-card rounded-3xl p-6 sm:p-10 hidden">
+            <div class="text-center max-w-2xl mx-auto">
+                <div id="result-badge" class="w-24 h-24 bg-amber-100 text-amber-500 border-4 border-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-1" id="result-title">Xuất Sắc!</h2>
+                <p class="text-slate-600 text-sm mb-6" id="result-subtitle">Chúc mừng bạn đã hoàn thành bài thi Khải Huyền Cao Cấp.</p>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-3 gap-3 mb-8">
+                    <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-500 font-medium">Tổng điểm</div>
+                        <div class="text-xl sm:text-2xl font-extrabold text-brand-600 mt-1" id="final-score">0</div>
+                    </div>
+                    <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-500 font-medium">Chính xác</div>
+                        <div class="text-xl sm:text-2xl font-extrabold text-emerald-600 mt-1" id="final-accuracy">0%</div>
+                    </div>
+                    <div class="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="text-xs text-slate-500 font-medium">Thời gian</div>
+                        <div class="text-xl sm:text-2xl font-extrabold text-amber-600 mt-1" id="final-time">00:00</div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap justify-center gap-3 mb-8">
+                    <button onclick="resetGame()" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl shadow-lg transition">
+                        <i class="fa-solid fa-rotate-right mr-2"></i>Chơi lại
+                    </button>
+                    <button onclick="showLeaderboardModal()" class="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition">
+                        <i class="fa-solid fa-trophy mr-2"></i>Xem Bảng Xếp Hạng
+                    </button>
+                    <button onclick="toggleReview()" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl border border-slate-200 transition">
+                        <i class="fa-solid fa-magnifying-glass mr-2"></i>Xem lại đáp án
+                    </button>
+                </div>
+
+                <!-- Review Accordion -->
+                <div id="review-section" class="hidden text-left border-t border-slate-200 pt-6 space-y-4 max-h-96 overflow-y-auto pr-2">
+                    <h3 class="font-bold text-slate-800 text-base mb-4"><i class="fa-solid fa-clipboard-check mr-2 text-brand-600"></i>Chi tiết đáp án bài thi:</h3>
+                    <div id="review-list" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: LEADERBOARD -->
+    <div id="leaderboard-modal" class="fixed inset-0 bg-slate-900/70 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 flex flex-col max-h-[90vh]">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-800">BẢNG XẾP HẠNG</h3>
+                        <p class="text-xs text-slate-500">Top các thành tích cao nhất</p>
+                    </div>
+                </div>
+                <button onclick="closeLeaderboardModal()" class="w-9 h-9 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Leaderboard Table / List -->
+            <div class="overflow-y-auto flex-1 pr-1 space-y-3" id="leaderboard-container">
+                <!-- Dynamic Content -->
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="pt-4 mt-4 border-t border-slate-100 flex flex-wrap justify-between items-center gap-2">
+                <div class="flex space-x-2">
+                    <button onclick="exportLeaderboard()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold flex items-center border border-slate-200">
+                        <i class="fa-solid fa-download mr-1 text-brand-600"></i>Xuất BXH (JSON)
+                    </button>
+                    <button onclick="importLeaderboardPrompt()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg font-semibold flex items-center border border-slate-200">
+                        <i class="fa-solid fa-upload mr-1 text-amber-600"></i>Nhập BXH
+                    </button>
+                </div>
+                <div class="flex items-center space-x-3 ml-auto">
+                    <button onclick="clearLeaderboard()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center">
+                        <i class="fa-regular fa-trash-can mr-1"></i>Xóa lịch sử
+                    </button>
+                    <button onclick="closeLeaderboardModal()" class="px-5 py-2.5 bg-brand-600 text-white font-bold rounded-xl text-sm hover:bg-brand-700 transition">
+                        Đóng
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO SYNTHESIZER -->
+    <script>
+        const playSound = (type) => {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'correct') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                    osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.1);
+                    osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.2);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                } else if (type === 'wrong') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(220, ctx.currentTime);
+                    osc.frequency.setValueAtTime(180, ctx.currentTime + 0.15);
+                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                }
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        };
+    </script>
+
+    <!-- DATA & LOGIC -->
+    <script>
+        // Full Question Bank for 20 questions with precise text & target blanks
+        // Share Game Link function
+        function shareGameLink() {
+            const shareData = {
+                title: 'Game Điền Từ - Kỳ Thi Cao Cấp Khải Huyền',
+                text: 'Hãy tham gia thử thách điền từ 20 câu hỏi Khải Huyền cùng mình nhé!',
+                url: window.location.href
+            };
+
+            if (navigator.share) {
+                navigator.share(shareData).catch((err) => {
+                    console.log('Chia sẻ bị hủy', err);
+                });
+            } else {
+                // Fallback copy to clipboard
+                const dummy = document.createElement('input');
+                document.body.appendChild(dummy);
+                dummy.value = window.location.href;
+                dummy.select();
+                document.execCommand('copy');
+                document.body.removeChild(dummy);
+
+                alert('Đã sao chép link game vào clipboard! Bạn có thể dán (paste) và gửi cho bạn bè qua Zalo, Messenger...');
+            }
+        }
+
+        // Export Leaderboard Data
+        function exportLeaderboard() {
+            const data = localStorage.getItem('kh_quiz_leaderboard') || '[]';
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `BangXepHang_Khaitoan_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Import Leaderboard Data
+        function importLeaderboardPrompt() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedData = JSON.parse(event.target.result);
+                        if (Array.isArray(importedData)) {
+                            let current = JSON.parse(localStorage.getItem('kh_quiz_leaderboard') || '[]');
+                            // Merge and deduplicate by ID
+                            const map = new Map();
+                            [...current, ...importedData].forEach(item => {
+                                if (item.id) map.set(item.id, item);
+                            });
+                            const merged = Array.from(map.values());
+                            merged.sort((a, b) => {
+                                if (b.score !== a.score) return b.score - a.score;
+                                return a.seconds - b.seconds;
+                            });
+                            localStorage.setItem('kh_quiz_leaderboard', JSON.stringify(merged.slice(0, 50)));
+                            showLeaderboardModal();
+                            alert('Đã đồng bộ thành công Bảng Xếp Hạng!');
+                        }
+                    } catch (err) {
+                        alert('File không hợp lệ!');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        function selectCount(count) {
+            questionCount = count;
+            const buttons = document.querySelectorAll('.count-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('border-brand-500', 'bg-brand-50', 'text-brand-700', 'font-bold');
+                btn.classList.add('border-slate-200', 'text-slate-600');
+            });
+            event.currentTarget.classList.add('border-brand-500', 'bg-brand-50', 'text-brand-700', 'font-bold');
+            event.currentTarget.classList.remove('border-slate-200', 'text-slate-600');
+        }
+
+        function startTimer() {
+            secondsElapsed = 0;
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
+                document.getElementById('timer').innerText = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
+        // Start Game
+        function startGame() {
+            const nameInput = document.getElementById('player-name-input').value.trim();
+            const errorMsg = document.getElementById('name-error-msg');
+
+            if (!nameInput) {
+                errorMsg.classList.remove('hidden');
+                document.getElementById('player-name-input').focus();
+                return;
+            }
+            errorMsg.classList.add('hidden');
+            playerName = nameInput;
+            localStorage.setItem('kh_quiz_last_name', playerName);
+
+            let list = [...questionBank];
+            if (currentMode === 'random') {
+                list.sort(() => Math.random() - 0.5);
+            }
+            activeQuestions = list.slice(0, Math.min(questionCount, list.length));
+
+            currentIndex = 0;
+            score = 0;
+            userAnswersHistory = [];
+
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('current-player-display').innerText = playerName;
+
+            startTimer();
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const q = activeQuestions[currentIndex];
+            document.getElementById('question-tracker').innerText = `Câu ${currentIndex + 1}/${activeQuestions.length}`;
+            document.getElementById('question-number').innerText = `CÂU HỎI ${q.id}`;
+            document.getElementById('question-title').innerText = q.title;
+            document.getElementById('current-score').innerText = score;
+
+            const progPercent = (currentIndex / activeQuestions.length) * 100;
+            document.getElementById('progress-bar').style.width = `${progPercent}%`;
+
+            document.getElementById('feedback-box').classList.add('hidden');
+            document.getElementById('btn-check').classList.remove('hidden');
+            document.getElementById('btn-next').classList.add('hidden');
+            document.getElementById('hint-box').classList.add('hidden');
+
+            // Render auto fill-in-the-blanks inside fullAnswer text
+            let textToReplace = q.fullAnswer;
+            
+            // Sort blanks by length descending to prevent substring collisions
+            const sortedBlanks = [...q.blanks].map((b, idx) => ({ text: b, originalIndex: idx }))
+                .sort((a, b) => b.text.length - a.text.length);
+
+            // Replace occurrence with placeholder token
+            const tokens = [];
+            sortedBlanks.forEach((item, i) => {
+                const tokenKey = `___BLANK_TOKEN_${i}___`;
+                const regex = new RegExp(item.text.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'gi');
+                if (regex.test(textToReplace)) {
+                    textToReplace = textToReplace.replace(regex, tokenKey);
+                    tokens.push({ tokenKey, blank: item.text, blankIndex: item.originalIndex });
+                }
+            });
+
+            // If some blanks are not matched directly, fallback replace
+            let renderedHTML = textToReplace;
+            tokens.forEach(tok => {
+                const inputWidth = Math.max(tok.blank.length * 11, 80);
+                const inputHTML = `<input type="text" data-index="${tok.blankIndex}" class="blank-input px-2.5 py-1 font-bold text-brand-900 rounded-md mx-1 text-center shadow-sm" style="width: ${inputWidth}px" placeholder="..." autocomplete="off" />`;
+                renderedHTML = renderedHTML.replace(tok.tokenKey, inputHTML);
+            });
+
+            renderedHTML = renderedHTML.replace(/\n/g, '<br/>');
+            document.getElementById('fill-template').innerHTML = renderedHTML;
+
+            setTimeout(() => {
+                const firstInput = document.querySelector('.blank-input');
+                if (firstInput) firstInput.focus();
+            }, 100);
+        }
+
+        function toggleHint() {
+            const hintBox = document.getElementById('hint-box');
+            if (hintBox.classList.contains('hidden')) {
+                const q = activeQuestions[currentIndex];
+                const hints = q.blanks.map((b, i) => `Ô [${i+1}]: Bắt đầu "<b>${b.charAt(0)}...</b>" (${b.length} ký tự)`).join('<br/>');
+                document.getElementById('hint-text').innerHTML = hints;
+                hintBox.classList.remove('hidden');
+            } else {
+                hintBox.classList.add('hidden');
+            }
+        }
+
+        // Advanced String Normalization (case-insensitive, strip accents & special punctuation)
+        function normalizeText(str) {
+            if (!str) return "";
+            return str
+                .toLowerCase()
+                .trim()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "");
+        }
+
+        function checkAnswer() {
+            const q = activeQuestions[currentIndex];
+            const inputs = document.querySelectorAll('.blank-input');
+            let allCorrect = true;
+            let questionScore = 0;
+            let userInputsArr = [];
+
+            inputs.forEach((input) => {
+                const idx = parseInt(input.getAttribute('data-index'));
+                const val = input.value.trim();
+                userInputsArr[idx] = val;
+                const target = q.blanks[idx];
+
+                const normVal = normalizeText(val);
+                const normTarget = normalizeText(target);
+
+                if (normVal === normTarget && normVal !== "") {
+                    input.classList.remove('blank-incorrect');
+                    input.classList.add('blank-correct');
+                    input.readOnly = true;
+                    questionScore += 10;
+                } else {
+                    input.classList.remove('blank-correct');
+                    input.classList.add('blank-incorrect');
+                    allCorrect = false;
+                }
+            });
+
+            score += questionScore;
+            document.getElementById('current-score').innerText = score;
+
+            userAnswersHistory.push({
+                question: q,
+                userInputs: userInputsArr,
+                isCorrect: allCorrect
+            });
+
+            const feedbackBox = document.getElementById('feedback-box');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackDetail = document.getElementById('feedback-detail');
+
+            feedbackBox.classList.remove('hidden', 'bg-emerald-50', 'border-emerald-200', 'bg-rose-50', 'border-rose-200');
+
+            if (allCorrect) {
+                playSound('correct');
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+                feedbackBox.classList.add('bg-emerald-50', 'border-emerald-200');
+                feedbackTitle.className = "font-bold text-emerald-800 flex items-center mb-1";
+                feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-2"></i> Chính xác tuyệt đối! (+${questionScore} điểm)`;
+                feedbackDetail.innerHTML = `Đáp án đúng: <b>${q.blanks.join(' / ')}</b>`;
+            } else {
+                playSound('wrong');
+                feedbackBox.classList.add('bg-rose-50', 'border-rose-200');
+                feedbackTitle.className = "font-bold text-rose-800 flex items-center mb-1";
+                feedbackTitle.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-2"></i> Chưa chính xác hoàn toàn! (+${questionScore} điểm)`;
+                feedbackDetail.innerHTML = `Đáp án đúng cần điền: <div class="font-bold text-slate-800 mt-1">${q.blanks.map((b, idx) => `[Ô ${idx+1}]: ${b}`).join(' &nbsp;|&nbsp; ')}</div>`;
+            }
+
+            document.getElementById('btn-check').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+        }
+
+        function showAnswer() {
+            const q = activeQuestions[currentIndex];
+            const inputs = document.querySelectorAll('.blank-input');
+
+            inputs.forEach((input) => {
+                const idx = parseInt(input.getAttribute('data-index'));
+                input.value = q.blanks[idx];
+                input.classList.add('blank-correct');
+                input.readOnly = true;
+            });
+
+            checkAnswer();
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < activeQuestions.length) {
+                loadQuestion();
+            } else {
+                finishGame();
+            }
+        }
+
+        // Leaderboard storage
+        function saveToLeaderboard(name, scoreVal, accuracyVal, timeFormatted, secondsVal, countVal) {
+            let leaderboard = JSON.parse(localStorage.getItem('kh_quiz_leaderboard') || '[]');
+            const newRecord = {
+                id: Date.now(),
+                name: name,
+                score: scoreVal,
+                accuracy: accuracyVal,
+                timeStr: timeFormatted,
+                seconds: secondsVal,
+                questionCount: countVal,
+                date: new Date().toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+            };
+            leaderboard.push(newRecord);
+
+            // Sort: High score DESC, then Fast time ASC
+            leaderboard.sort((a, b) => {
+                if (b.score !== a.score) return b.score - a.score;
+                return a.seconds - b.seconds;
+            });
+
+            leaderboard = leaderboard.slice(0, 50);
+            localStorage.setItem('kh_quiz_leaderboard', JSON.stringify(leaderboard));
+        }
+
+        function finishGame() {
+            stopTimer();
+
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+
+            const totalCorrect = userAnswersHistory.filter(h => h.isCorrect).length;
+            const accuracy = Math.round((totalCorrect / activeQuestions.length) * 100);
+
+            const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+            const secs = String(secondsElapsed % 60).padStart(2, '0');
+            const timeStr = `${mins}:${secs}`;
+
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('final-time').innerText = timeStr;
+
+            saveToLeaderboard(playerName, score, accuracy, timeStr, secondsElapsed, activeQuestions.length);
+
+            const badge = document.getElementById('result-badge');
+            const title = document.getElementById('result-title');
+            const subtitle = document.getElementById('result-subtitle');
+
+            if (accuracy >= 90) {
+                badge.className = "w-24 h-24 bg-amber-100 text-amber-500 border-4 border-amber-400 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg";
+                badge.innerHTML = '<i class="fa-solid fa-crown"></i>';
+                title.innerText = `Xuất Sắc, ${playerName}!`;
+                subtitle.innerText = "Bạn đã hoàn thành bài thi với điểm số cao tuyệt đối!";
+                confetti({ particleCount: 120, spread: 100, origin: { y: 0.5 } });
+            } else if (accuracy >= 60) {
+                badge.className = "w-24 h-24 bg-sky-100 text-brand-600 border-4 border-brand-400 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg";
+                badge.innerHTML = '<i class="fa-solid fa-star"></i>';
+                title.innerText = `Làm Tốt Lắm, ${playerName}!`;
+                subtitle.innerText = "Bạn có thành tích khá tốt, hãy ôn luyện thường xuyên nhé!";
+            } else {
+                badge.className = "w-24 h-24 bg-slate-100 text-slate-500 border-4 border-slate-300 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg";
+                badge.innerHTML = '<i class="fa-solid fa-book-open"></i>';
+                title.innerText = `Cố gắng hơn nữa nhé, ${playerName}!`;
+                subtitle.innerText = "Hãy xem lại chi tiết bài làm phía dưới để học thuộc các từ khóa.";
+            }
+
+            buildReviewList();
+        }
+
+        function showLeaderboardModal() {
+            const modal = document.getElementById('leaderboard-modal');
+            const container = document.getElementById('leaderboard-container');
+            const leaderboard = JSON.parse(localStorage.getItem('kh_quiz_leaderboard') || '[]');
+
+            if (leaderboard.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-12 text-slate-400">
+                        <i class="fa-solid fa-trophy text-5xl mb-3 opacity-30"></i>
+                        <p class="font-medium text-sm">Chưa có lượt thi nào được ghi nhận.</p>
+                        <p class="text-xs mt-1">Hãy là người đầu tiên tham gia chơi!</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = leaderboard.map((item, rank) => {
+                    let rankBadge = '';
+                    if (rank === 0) {
+                        rankBadge = '<span class="w-7 h-7 bg-amber-400 text-white rounded-full flex items-center justify-center font-extrabold text-xs shadow-md"><i class="fa-solid fa-crown"></i></span>';
+                    } else if (rank === 1) {
+                        rankBadge = '<span class="w-7 h-7 bg-slate-300 text-slate-700 rounded-full flex items-center justify-center font-bold text-xs">2</span>';
+                    } else if (rank === 2) {
+                        rankBadge = '<span class="w-7 h-7 bg-amber-700/60 text-white rounded-full flex items-center justify-center font-bold text-xs">3</span>';
+                    } else {
+                        rankBadge = `<span class="w-7 h-7 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center font-semibold text-xs">${rank + 1}</span>`;
+                    }
+
+                    return `
+                        <div class="flex items-center justify-between p-3.5 rounded-2xl ${rank === 0 ? 'bg-amber-50/80 border border-amber-200' : 'bg-slate-50 border border-slate-100'} transition hover:shadow-sm">
+                            <div class="flex items-center space-x-3">
+                                ${rankBadge}
+                                <div>
+                                    <div class="font-bold text-slate-800 text-sm flex items-center">
+                                        ${item.name}
+                                        <span class="ml-2 text-[10px] font-normal text-slate-400 bg-white px-1.5 py-0.5 rounded border border-slate-200">${item.questionCount} câu</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 font-medium">
+                                        <i class="fa-regular fa-clock mr-1"></i>${item.timeStr} | ${item.date}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="font-extrabold text-brand-600 text-base">${item.score} <span class="text-xs font-normal">đ</span></div>
+                                <div class="text-xs font-bold text-emerald-600">${item.accuracy}% đúng</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeLeaderboardModal() {
+            document.getElementById('leaderboard-modal').classList.add('hidden');
+        }
+
+        function clearLeaderboard() {
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ Bảng Xếp Hạng?")) {
+                localStorage.removeItem('kh_quiz_leaderboard');
+                showLeaderboardModal();
+            }
+        }
+
+        function buildReviewList() {
+            const container = document.getElementById('review-list');
+            container.innerHTML = '';
+
+            userAnswersHistory.forEach((item, index) => {
+                const q = item.question;
+                const statusColor = item.isCorrect ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-rose-600 bg-rose-50 border-rose-200';
+                const statusIcon = item.isCorrect ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-xmark"></i>';
+
+                const card = document.createElement('div');
+                card.className = "p-4 rounded-xl border bg-white shadow-sm";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase">Câu ${index + 1} (Câu ${q.id} PDF)</span>
+                        <span class="text-xs font-bold px-2.5 py-1 rounded-full border ${statusColor}">
+                            ${statusIcon} ${item.isCorrect ? 'Đúng' : 'Chưa chuẩn'}
+                        </span>
+                    </div>
+                    <p class="text-sm font-semibold text-slate-800 mb-2">${q.title}</p>
+                    <div class="text-xs text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-1">
+                        <div><b>Các từ khóa đúng:</b> <span class="text-emerald-700 font-bold">${q.blanks.join(' / ')}</span></div>
+                        ${!item.isCorrect ? `<div class="text-rose-600"><b>Bạn đã nhập:</b> ${(item.userInputs || []).join(' / ') || '(Bỏ trống)'}</div>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function toggleReview() {
+            const reviewSec = document.getElementById('review-section');
+            reviewSec.classList.toggle('hidden');
+        }
+
+        function resetGame() {
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
